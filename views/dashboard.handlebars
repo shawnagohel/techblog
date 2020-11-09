@@ -1,0 +1,102 @@
+<h1>
+    Blog Dashboard
+</h1>
+
+<div id="posts">
+
+</div>
+
+<button id='addpost'></button>
+
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
+    Launch demo modal
+</button>
+
+<div class="modal" tabindex="-1" role="dialog" id="exampleModal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit post</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                    <div>
+                        <input type='text' id='modal-text-body'>
+                    </div>
+                    <div>
+                        <textarea id='modal-text-body'>
+
+                    </textarea>
+                    </div>
+                </form>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="updatePost">Update</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+
+    async function fetchUserPosts() {
+
+        const username = "{{username}}"
+        const response = await fetch(`/posts/${username}`)
+        const { posts } = await response.json()
+
+        for (post of posts) {
+            const postTitleHolder = document.createElement('button')
+            postTitleHolder.classList.add('post-title-holder')
+            postTitleHolder.innerHTML = post.title
+
+            postTitleHolder.addEventListener('click', () => {
+                setTitleAndBody(post.id, post.title, post.body) 
+            })
+
+            const postsDiv = document.getElementById('posts')
+            postsDiv.appendChild(postTitleHolder)
+        }
+    }
+
+    fetchUserPosts()
+</script>
+
+<script>
+
+//    $('#myModal').on('shown.bs.modal', function () {
+  //      $('#myInput').trigger('focus')
+   // })
+
+    async function updatePost(id) {
+        const modalContentBody = document.getElementById('modal-text-body')
+        const modalContentTitle = document.getElementById('modal-text-title')
+
+        const result = await fetch(`/posts/${id}` , {
+            method: 'update',
+            headers: {
+                'Content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: modalContentTitle.innerHTML,
+                body: modalContentBody.innerHTML
+            })
+        })
+
+        const setTitleAndBody = (id, title, body) =>  {
+        const modalContentBody = document.getElementById('modal-text-body')
+        const modalContentTitle = document.getElementById('modal-text-title')
+
+        modalContentBody.innerHTML = body
+        modalContentTitle.innerHTML = title
+        }
+    }
+
+
+
+</script>
