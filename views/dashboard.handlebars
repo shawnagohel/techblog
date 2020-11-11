@@ -6,12 +6,11 @@
 
 </div>
 
-<button id='addpost'></button>
-
-<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
-    Launch demo modal
+<button id='addpost' type='button' class="btn btn-danger" data-target='#addModal' data-toggle="modal">
+    <h1>+</h1>
 </button>
 
+{{!-- UPDATE MODAL --}}
 <div class="modal" tabindex="-1" role="dialog" id="exampleModal">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -22,20 +21,55 @@
                 </button>
             </div>
             <div class="modal-body">
+                <form>
+                    <input id="post-id" type="hidden">
                     <div>
-                        <input type='text' id='modal-text-body'>
+                        <input type='text' id='modal-text-title'>
                     </div>
                     <div>
                         <textarea id='modal-text-body'>
-
                     </textarea>
                     </div>
+                </form>
                 </form>
 
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="updatePost">Update</button>
-                <button type="button" class="btn btn-danger" data-dismiss="modal">Delete</button>
+                <button type="button" class="btn btn-secondary" onclick="updatePost()"
+                    data-dismiss="modal">Update</button>
+                <button type="submit" class="btn btn-danger" data-dismiss="modal">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{!-- ADD MODAL --}}
+<div class="modal" tabindex="-1" role="dialog" id="addModal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add post</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <input id="add-post-id" type="hidden">
+                    <div>
+                        <input type='text' id='add-modal-text-title'>
+                    </div>
+                    <div>
+                        <textarea id='add-modal-text-body'>
+                    </textarea>
+                    </div>
+                </form>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="createPost()"
+                    data-dismiss="modal">Create</button>
+                <button type="submit" class="btn btn-danger" data-dismiss="modal">Delete</button>
             </div>
         </div>
     </div>
@@ -43,60 +77,148 @@
 
 <script>
 
+    const updateModal = {
+        title: null,
+        text: null
+    }
+
+    const addModal = {
+        title: null,
+        text: null
+    }
+
+    $("#modal-text-title").keyup(function (e) {
+        updateModal.title = e.target.value
+    })
+
+    $("#modal-text-body").keyup(function (e) {
+        updateModal.text = e.target.value
+    })
+
+    $("#add-modal-text-title").keyup(function (e) {
+        addModal.title = e.target.value
+    })
+
+    $("#add-modal-text-body").keyup(function (e) {
+        addModal.text = e.target.value
+    })
+
+    const setTitleAndBody = (id, title, body) => {
+
+        updateModal.title = title
+        updateModal.text = body
+
+        const hiddenInput = document.getElementById('post-id')
+        const modalContentBody = document.getElementById('modal-text-body')
+        const modalContentTitle = document.getElementById('modal-text-title')
+
+        $(hiddenInput).attr('value', id)
+        modalContentBody.innerHTML = body
+        $(modalContentTitle).attr('value', title)
+    }
 
     async function fetchUserPosts() {
-
         const username = "{{username}}"
-        const response = await fetch(`/posts/${username}`)
+        const response = await fetch(`/posts/user/${username}`)
         const { posts } = await response.json()
-
         for (post of posts) {
             const postTitleHolder = document.createElement('button')
-            postTitleHolder.classList.add('post-title-holder')
             postTitleHolder.innerHTML = post.title
+            postTitleHolder.classList.add('post-title-holder')
+
+            postTitleHolder.attributes['data-toggle'] = 'model'
+            postTitleHolder.attributes['type'] = 'button'
+            postTitleHolder.attributes['data-target'] = "#exampleModal"
+
+            let { id, title, body } = post
 
             postTitleHolder.addEventListener('click', () => {
-                setTitleAndBody(post.id, post.title, post.body) 
+                setTitleAndBody(id, title, body)
             })
-
             const postsDiv = document.getElementById('posts')
             postsDiv.appendChild(postTitleHolder)
         }
+
+        $('.post-title-holder').attr('data-toggle', 'modal')
+        $('.post-title-holder').attr('type', 'button')
+        $('.post-title-holder').attr('data-target', '#exampleModal')
+    }
+    fetchUserPosts()
+
+
+    async function createPost() {
+
+        try {
+            const result = await fetch(`/posts`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    "title": addModal.title,
+                    "text": addModal.text
+                })
+            })
+
+            if (result) console.log('post created')
+        }
+        catch (e) {
+            console.log(e)
+        }
     }
 
-    fetchUserPosts()
-</script>
 
-<script>
+    async function updatePost() {
+        const id = $('#post-id').attr('value')
 
-//    $('#myModal').on('shown.bs.modal', function () {
-  //      $('#myInput').trigger('focus')
-   // })
-
-    async function updatePost(id) {
-        const modalContentBody = document.getElementById('modal-text-body')
-        const modalContentTitle = document.getElementById('modal-text-title')
-
-        const result = await fetch(`/posts/${id}` , {
-            method: 'update',
-            headers: {
-                'Content-type': 'application/json'
-            },
-            body: JSON.stringify({
-                title: modalContentTitle.innerHTML,
-                body: modalContentBody.innerHTML
+        try {
+            const result = await fetch(`/posts/${id}`, {
+                method: "post",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    "id": id,
+                    "title": updateModal.title,
+                    "text": updateModal.text
+                })
             })
-        })
-
-        const setTitleAndBody = (id, title, body) =>  {
-        const modalContentBody = document.getElementById('modal-text-body')
-        const modalContentTitle = document.getElementById('modal-text-title')
-
-        modalContentBody.innerHTML = body
-        modalContentTitle.innerHTML = title
+        }
+        catch (e) {
+            alert('error sending update')
+            console.log(e)
         }
     }
 
 
 
 </script>
+
+<style>
+    #addpost {
+        float: right;
+    }
+
+    .modal {
+        overflow: visible;
+        width: 80% !important;
+        height: 80% !important;
+    }
+
+    .modal-dialog,
+    .modal-content {
+        overflow: visible;
+        width: 100%;
+        height: 100%;
+    }
+
+    #modal-text-body {
+        width: 100%;
+        height: 400px;
+    }
+
+    .post-title-holder {
+        display: block;
+        margin-top: 40px;
+    }
+</style>

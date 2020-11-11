@@ -1,9 +1,33 @@
 <h1>Example App: Home</h1>
 
 <div id="home-posts">
+
+    <div class="modal" tabindex="-1" role="dialog" id="comModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Comments for Post</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id='modal-comments-list'></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
+
+    $('.comment-button').attr('data-toggle', 'modal')
+    $('.comment-button').attr('type', 'button')
+    $('.comment-button').attr('data-target', '#comModal')
+
+    var comments_obj = {}
+    var posts_obj = {}
 
     async function fetchPosts() {
         const data = await fetch('/posts')
@@ -15,7 +39,35 @@
             const div = document.createElement('div')
             div.classList.add('post')
 
+            const { id } = post
+
+
+
             const title = document.createElement('h4')
+            title.addEventListener('click', async (e) => {
+                var comment = prompt('Enter comment for post:')
+
+                try {
+                    if (comment !== null && comment.trim() !== "") {
+                        const result = await fetch('/comments/', {
+                            method: 'post',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                post_id: id,
+                                comment: comment
+                            })
+                        })
+                    }
+                } catch (e) {
+                    console.log(e)
+                }
+
+
+
+                console.log(comment)
+            })
             title.classList.add('post-title')
             title.innerHTML = post.title
             div.appendChild(title)
@@ -26,6 +78,27 @@
             div.appendChild(body)
 
             homePosts.appendChild(div)
+
+            const viewCommentsButton = document.createElement('button')
+            viewCommentsButton.classList.add('comment-button')
+            viewCommentsButton.innerHTML = "View Comments"
+            viewCommentsButton.addEventListener("click", async () => {
+                const commentsForPost = await fetch('/comments/' + id)
+
+                if (commentsForPost){
+                const { comments } = await commentsForPost.json()
+                }
+
+                comments.forEach(com => {
+                    const list = document.getElementById('modal-comments-list')
+                    const listItem = document.createElement('div')
+                    listItem.classList.add('comment-list-item')
+                    listItem.innerHTML = comment
+                })
+
+            })
+
+            div.appendChild(viewCommentsButton)
         })
 
 
